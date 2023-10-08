@@ -61,7 +61,7 @@
 
 #define TEMPO 1000	// time of one bar (battuta del pentagramma) in ms
 
-#define SONG_SELECTOR 2
+#define SONG_SELECTOR 3
 
 /* USER CODE END PD */
 
@@ -132,9 +132,13 @@ static struct note* create_Song(int[], int[], int);
 // the parameters are the array of notes and delays of the song
 static void play_Song(struct note*);
 
+// ausiliary function to create and play a song
+static void create_and_play(int[], int[], int, int);
+
 // the parameter is the TEMPO multiplier
 static void play_London_Bridge(int);
 static void play_Pokemon_Emerald(int);
+static void play_Io_Credo_In_Me(int);
 
 /* USER CODE END PFP */
 
@@ -196,6 +200,9 @@ int main(void)
 				break;
 			case 2:
 				play_Pokemon_Emerald(1);
+				break;
+			case 3:
+				play_Io_Credo_In_Me(2);
 				break;
 			default:
 				error_routine();
@@ -640,6 +647,16 @@ static void play_Song(struct note* head) {
 
 }
 
+static void create_and_play(int notes[], int delays[], int size_notes, int size_delays) {
+	// check dimension of arrays and create structure of song
+	if(size_notes != size_delays) {
+		error_routine();
+	} else {
+		struct note* head = create_Song(notes, delays, size_notes);
+		play_Song(head);
+	}
+}
+
 
 static void play_London_Bridge(int multi) {
 	// write notes
@@ -673,13 +690,8 @@ static void play_London_Bridge(int multi) {
 					(int) TEMPO * multi * 6/8
 	};
 
-	// check dimension of arrays and create structure of song
-	if((sizeof(notes)/sizeof(int)) != (sizeof(delays)/sizeof(int))) {
-		error_routine();
-	} else {
-		struct note* head = create_Song(notes, delays, (sizeof(notes)/sizeof(int)));
-		play_Song(head);
-	}
+
+	create_and_play(notes, delays, (sizeof(notes)/sizeof(int)), (sizeof(delays)/sizeof(int)));
 }
 
 static void play_Pokemon_Emerald(int multi) {
@@ -838,17 +850,245 @@ static void play_Pokemon_Emerald(int multi) {
 			(int) TEMPO * multi * 2/8,
 
 			(int) TEMPO * multi * 2/8,
-			(int) TEMPO * multi * 6/8
+			(int) TEMPO * multi * 6/8,
 	};
 
-	// check dimension of arrays and create structure of song
-	if((sizeof(notes)/sizeof(int)) != (sizeof(delays)/sizeof(int))) {
-		error_routine();
-	} else {
-		struct note* head = create_Song(notes, delays, (sizeof(notes)/sizeof(int)));
-		play_Song(head);
-	}
+	create_and_play(notes, delays, (sizeof(notes)/sizeof(int)), (sizeof(delays)/sizeof(int)));
 }
+
+
+static void play_Io_Credo_In_Me(int multi) {
+	// write notes
+	int notes[] = { PAUSE,
+					MI4,
+					RE4,
+					MI4,
+					DO4,	//LUNGO
+					MI4,
+					RE4,
+					MI4,
+					RE4,	//LUNGO
+					PAUSE,	//LUNGO
+					MI4,
+					RE4,
+					MI4,
+					DO4,	//LUNGO
+					MI4,
+					RE4,
+					MI4,
+					RE4,	//LUNGO
+					MI4,
+					MI4,
+					RE4,
+					DO4, 	//LUNGO
+					MI4,
+					MI4,
+					RE4,
+					DO4, 	//LUNGO
+					MI4,
+					RE4,
+					MI4,
+					DO4, 	//LUNGO
+					MI4,
+					RE4,
+					MI4,
+					RE4, 	//LUNGO
+					MI4,
+					MI4,
+					RE4,
+					DO4,	//LUNGO
+					MI4,
+					MI4,
+					RE4,
+					DO4,	//LUNGO
+					SOL4,
+					FA4,
+					MI4,
+					RE4,	//LUNGO
+					SOL4,
+					FA4,
+					MI4,
+					DO4,	//LUNGO
+					DO4,
+					DO4,
+					FA4,
+					MI4,
+					FA4,
+					MI4,
+					MI4,	//LUNGO
+					SOL4,
+					FA4,
+					MI4,
+					RE4,	//LUNGO
+					SOL4,
+					SOL4,
+					LA4,
+					DO4,
+					DO4,
+					DO4,
+					LA4,
+					LA4,
+					LA4,
+					SOL4,
+					SOL4, 	//LUNGO
+					DO5,
+					SI4,
+					DO5,
+					SOL4,	//LUNGO
+					DO5,
+					SI4,
+					DO5,
+					FA4,	//LUNGO
+					FA4,
+					FA4,
+					LA4,
+					LA4,
+					LA4,
+					SOL4,
+					SOL4,	//LUNGO
+					DO5,
+					SI4,
+					DO5,
+					SOL4,	//LUNGO
+					DO5,
+					SI4,
+					DO5,
+					FA4,	//LUNGO
+					LA4,
+					LA4,
+					DO5,
+					LA4,
+					DO5,
+					RE5,
+					RE5,	//LUNGO
+					RE5,
+					DO5,
+					LA4_,
+					DO5,
+					FA4,
+					DO5,
+					LA4_,
+					LA4,
+					SOL4	//LUNGO
+			};
+
+	// write tempos
+	int delays[] = {(int) TEMPO * multi * 2/8,
+					(int) TEMPO * multi * 1/8,
+					(int) TEMPO * multi * 2/8,
+					(int) TEMPO * multi * 2/8,
+					(int) TEMPO * multi * 3/8,	//LUNGO (1+2)
+					(int) TEMPO * multi * 1/8,
+					(int) TEMPO * multi * 2/8,
+					(int) TEMPO * multi * 2/8,
+					(int) TEMPO * multi * 3/8,	//LUNGO (1+2)
+					(int) TEMPO * multi * 8/8,	//LUNGO (pause), should be 12 but it is too long ;(
+					(int) TEMPO * multi * 1/8,
+					(int) TEMPO * multi * 2/8,
+					(int) TEMPO * multi * 2/8,
+					(int) TEMPO * multi * 3/8,	//LUNGO (1+2)
+					(int) TEMPO * multi * 1/8,
+					(int) TEMPO * multi * 2/8,
+					(int) TEMPO * multi * 2/8,
+					(int) TEMPO * multi * 3/8,	//LUNGO (1+2)
+					(int) TEMPO * multi * 1/8,
+					(int) TEMPO * multi * 3/8,
+					(int) TEMPO * multi * 1/8,
+					(int) TEMPO * multi * 3/8,	//LUNGO (1+2)
+					(int) TEMPO * multi * 1/8,
+					(int) TEMPO * multi * 3/8,
+					(int) TEMPO * multi * 1/8,
+					(int) TEMPO * multi * 3/8, 	//LUNGO (1+2)
+					(int) TEMPO * multi * 1/8,
+					(int) TEMPO * multi * 2/8,
+					(int) TEMPO * multi * 2/8,
+					(int) TEMPO * multi * 3/8,	//LUNGO (1+2)
+					(int) TEMPO * multi * 1/8,
+					(int) TEMPO * multi * 2/8,
+					(int) TEMPO * multi * 2/8,
+					(int) TEMPO * multi * 3/8,	//LUNGO (1+2)
+					(int) TEMPO * multi * 1/8,
+					(int) TEMPO * multi * 2/8,
+					(int) TEMPO * multi * 1/8,
+					(int) TEMPO * multi * 3/8,	//LUNGO (1+2)
+					(int) TEMPO * multi * 1/8,
+					(int) TEMPO * multi * 2/8,
+					(int) TEMPO * multi * 1/8,
+					(int) TEMPO * multi * 3/8,	//LUNGO (1+2)
+					(int) TEMPO * multi * 1/8,
+					(int) TEMPO * multi * 2/8,
+					(int) TEMPO * multi * 2/8,
+					(int) TEMPO * multi * 3/8,	//LUNGO (1+2)
+					(int) TEMPO * multi * 1/8,
+					(int) TEMPO * multi * 2/8,
+					(int) TEMPO * multi * 2/8,
+					(int) TEMPO * multi * 7/8,	//LUNGO (1+6)
+					(int) TEMPO * multi * 1/8,
+					(int) TEMPO * multi * 1/8,
+					(int) TEMPO * multi * 2/8,
+					(int) TEMPO * multi * 1/8,
+					(int) TEMPO * multi * 2/8,
+					(int) TEMPO * multi * 2/8,
+					(int) TEMPO * multi * 3/8,	//LUNGO (1+2)
+					(int) TEMPO * multi * 1/8,
+					(int) TEMPO * multi * 2/8,
+					(int) TEMPO * multi * 2/8,
+					(int) TEMPO * multi * 3/8,	//LUNGO (1+2)
+					(int) TEMPO * multi * 1/8,
+					(int) TEMPO * multi * 2/8,
+					(int) TEMPO * multi * 3/8,
+					(int) TEMPO * multi * 6/8,
+					(int) TEMPO * multi * 1/8,
+					(int) TEMPO * multi * 1/8,
+					(int) TEMPO * multi * 2/8,
+					(int) TEMPO * multi * 1/8,
+					(int) TEMPO * multi * 2/8,
+					(int) TEMPO * multi * 2/8,
+					(int) TEMPO * multi * 3/8,	//LUNGO (1+2)
+					(int) TEMPO * multi * 1/8,
+					(int) TEMPO * multi * 2/8,
+					(int) TEMPO * multi * 2/8,
+					(int) TEMPO * multi * 3/8,	//LUNGO (1+2)
+					(int) TEMPO * multi * 1/8,
+					(int) TEMPO * multi * 2/8,
+					(int) TEMPO * multi * 2/8,
+					(int) TEMPO * multi * 7/8,	//LUNGO (1+6)
+					(int) TEMPO * multi * 1/8,
+					(int) TEMPO * multi * 1/8,
+					(int) TEMPO * multi * 2/8,
+					(int) TEMPO * multi * 1/8,
+					(int) TEMPO * multi * 2/8,
+					(int) TEMPO * multi * 2/8,
+					(int) TEMPO * multi * 3/8,	//LUNGO (1+2)
+					(int) TEMPO * multi * 1/8,
+					(int) TEMPO * multi * 2/8,
+					(int) TEMPO * multi * 2/8,
+					(int) TEMPO * multi * 3/8,	//LUNGO (1+2)
+					(int) TEMPO * multi * 1/8,
+					(int) TEMPO * multi * 2/8,
+					(int) TEMPO * multi * 2/8,
+					(int) TEMPO * multi * 7/8,	//LUNGO (1+6)
+					(int) TEMPO * multi * 1/8,
+					(int) TEMPO * multi * 1/8,
+					(int) TEMPO * multi * 2/8,
+					(int) TEMPO * multi * 1/8,
+					(int) TEMPO * multi * 2/8,
+					(int) TEMPO * multi * 2/8,
+					(int) TEMPO * multi * 3/8,	//LUNGO(1+2)
+					(int) TEMPO * multi * 1/8,
+					(int) TEMPO * multi * 2/8,
+					(int) TEMPO * multi * 2/8,
+					(int) TEMPO * multi * 1/8,
+					(int) TEMPO * multi * 2/8,
+					(int) TEMPO * multi * 1/8,
+					(int) TEMPO * multi * 2/8,
+					(int) TEMPO * multi * 2/8,
+					(int) TEMPO * multi * 3/8	//LUNGO (1+2)
+			};
+
+	create_and_play(notes, delays, (sizeof(notes)/sizeof(int)), (sizeof(delays)/sizeof(int)));
+}
+
 /* USER CODE END 4 */
 
 /**
