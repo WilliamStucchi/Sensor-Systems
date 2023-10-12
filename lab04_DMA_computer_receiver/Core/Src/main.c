@@ -21,7 +21,8 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "string.h"
+#include "stdio.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -91,9 +92,17 @@ int main(void)
   MX_GPIO_Init();
   MX_DMA_Init();
   MX_USART2_UART_Init();
+
   /* USER CODE BEGIN 2 */
 
-  HAL_UART_Transmit_DMA(&huart2, "Ciao\r\n", sizeof(char) * 6);
+  int count = 0;
+  unsigned char original[5] = "Ciao";
+  unsigned char string_to_send[10];
+
+  snprintf(string_to_send, 10, "%s\r\n", original);
+
+  // remember the size is the number of characters (\r and \n count as 1 each)
+  HAL_UART_Transmit_DMA(&huart2, string_to_send, sizeof(char) * 21);
   HAL_Delay(2000);
 
   /* USER CODE END 2 */
@@ -102,8 +111,13 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	HAL_UART_Transmit_DMA(&huart2, "Ciaoo\r\n", sizeof(char) * 7);
+	snprintf(string_to_send, 10, "%s: %d\r\n", original, count);
+	HAL_UART_Transmit_DMA(&huart2, string_to_send, sizeof(char) * 10);
 	HAL_Delay(2000);
+	count++;
+	if(count > 9) {
+		count = 0;
+	}
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
