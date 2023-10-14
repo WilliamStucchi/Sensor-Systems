@@ -60,11 +60,6 @@ static void MX_USART2_UART_Init(void);
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 	if(GPIO_Pin == GPIO_PIN_8) {
 		HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);	// switch SET and RESET state
-		/*	Stop triggering more interrupts close together
-		 *
-		 * HAL_Delay(2);
-		 * __HAL_GPIO_EXTI_CLEAR_IT(GPIO_Pin);
-		 */
 	}
 }
 
