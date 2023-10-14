@@ -450,9 +450,6 @@ static void MX_GPIO_Init(void)
   HAL_NVIC_SetPriority(EXTI9_5_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
 
-  HAL_NVIC_SetPriority(EXTI15_10_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
-
 /* USER CODE BEGIN MX_GPIO_Init_2 */
 /* USER CODE END MX_GPIO_Init_2 */
 }
@@ -482,11 +479,14 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 		play = 1;
 	}
 
+	// code used to stop the song with blue button pushed
+	/*
 	if(GPIO_Pin == GPIO_PIN_13) {
 		stop_timers();
 		stop = 1;
 		timer_finished = 1;
 	}
+	*/
 }
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
@@ -633,10 +633,13 @@ static void play_Song(struct note* head) {
 			}
 		}
 
+		// code used to stop the song when blue button is pushed
+		/*
 		if(stop) {
 			stop = 0;
 			break;
 		}
+		*/
 	}
 
 	// wait for the last note to end
