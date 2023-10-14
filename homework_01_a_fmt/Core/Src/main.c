@@ -43,7 +43,10 @@
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
-volatile int interrupt;	// this variable will be set when an interrupt of the microphone is detected
+
+// this variable will be set when an interrupt of the microphone is detected
+// volatile in order to be detectable from the while loop of the main
+volatile int interrupt;
 
 /* USER CODE END PV */
 
