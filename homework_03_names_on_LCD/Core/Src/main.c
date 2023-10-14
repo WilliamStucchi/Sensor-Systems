@@ -105,31 +105,28 @@ int main(void)
   int i = 0;
 
   // initialize names
-  char names[5][MAXWORDSIZE]; //= {WILLIAM, GIADA, FRANCESCOS, FRANCESCOT, PAOLO};
-  snprintf(names[0], MAXWORDSIZE, "%s", WILLIAM);
-  snprintf(names[1], MAXWORDSIZE, "%s", GIADA);
-  snprintf(names[2], MAXWORDSIZE, "%s", FRANCESCOS);
-  snprintf(names[3], MAXWORDSIZE, "%s", FRANCESCOT);
-  snprintf(names[4], MAXWORDSIZE, "%s", PAOLO);
+  char* names[] = {
+		  WILLIAM,
+		  GIADA,
+		  FRANCESCOS,
+		  FRANCESCOT,
+		  PAOLO
+  };
+  int array_dim = sizeof(names) / sizeof(char*);
 
   HAL_Delay(2000);
 
-  lcd_println(" ", 0);
-  lcd_println(names[0], 1);
+  lcd_println(names[i], 1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  for(i = 1; i < sizeof(names)/MAXWORDSIZE; i++) {
-		  HAL_Delay(1000);
-		  lcd_println(names[i-1], 0);
-		  lcd_println(names[i], 1);
-	  }
 	  HAL_Delay(1000);
-	  lcd_println(names[i-1], 0);
-	  lcd_println(" ", 1);
+	  lcd_println(names[i % array_dim], 0);
+	  lcd_println(names[(i+1) % array_dim], 1);
+	  i = (i + 1) % array_dim;
 
     /* USER CODE END WHILE */
 
