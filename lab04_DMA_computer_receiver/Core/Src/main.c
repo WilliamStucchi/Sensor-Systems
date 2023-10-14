@@ -95,15 +95,7 @@ int main(void)
 
   /* USER CODE BEGIN 2 */
 
-  int count = 0;
-  unsigned char original[5] = "Ciao";
-  unsigned char string_to_send[10];
-
-  snprintf(string_to_send, 10, "%s\r\n", original);
-
-  // remember the size is the number of characters (\r and \n count as 1 each)
-  HAL_UART_Transmit_DMA(&huart2, string_to_send, sizeof(char) * 21);
-  HAL_Delay(2000);
+  unsigned char string_to_send[] = {"William Stucchi 2000\r\n"};
 
   /* USER CODE END 2 */
 
@@ -111,13 +103,10 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	snprintf(string_to_send, 10, "%s: %d\r\n", original, count);
-	HAL_UART_Transmit_DMA(&huart2, string_to_send, sizeof(char) * 10);
-	HAL_Delay(2000);
-	count++;
-	if(count > 9) {
-		count = 0;
-	}
+	// remember the size is the number of characters (\r and \n count as 1 each)
+	HAL_UART_Transmit_DMA(&huart2, string_to_send, sizeof(char) * sizeof(string_to_send));
+	HAL_Delay(1000);
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
