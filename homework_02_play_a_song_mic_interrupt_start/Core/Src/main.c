@@ -57,7 +57,11 @@
 #define LA5_  901
 #define SI5   851
 
+#define PAUSE 0
+
 #define TEMPO 1000	// time of one bar (battuta del pentagramma) in ms
+
+#define SONG_SELECTOR 1
 
 /* USER CODE END PD */
 
@@ -78,11 +82,11 @@ struct note {
 	struct note* next;
 }note;
 
-// interrupt variable to START the song
-volatile int play = 0;
+// first note of the song, it is not null when the linked list for the song has been created
+struct note* head = NULL;
 
-// interrupt variable to STOP the song
-volatile int stop = 0;
+// represents the activation of the interrupt of the microphone, set to 1 when detected interrupt
+volatile int initialize_song = 0;
 
 /* USER CODE END PV */
 
@@ -92,7 +96,12 @@ static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_TIM1_Init(void);
 /* USER CODE BEGIN PFP */
+
+// microphone interrupt callback
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin);
+
+// routine in case of errors
+void error_routine(void);
 
 // receives the period of the node to set
 static void set_Note(int);
@@ -103,12 +112,9 @@ static void play_Note(int, int);
 // create the linked list of notes (that composes a song)
 static struct note* create_Song(int[], int[], int);
 
-// the parameters are the array of notes and delays of the song
-static void play_Song(struct note*);
-
 // the parameter is the TEMPO multiplier
-static void play_London_Bridge(int);
-static void play_Pokemon_Emerald(int);
+static struct note* play_London_Bridge(int);
+static struct note* play_Pokemon_Emerald(int);
 
 /* USER CODE END PFP */
 
@@ -155,11 +161,30 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	if(play) {
-		//play_London_Bridge(1);
-		play_Pokemon_Emerald(1);
-		play = 0;
-	}
+	  if(initialize_song) {
+		  // remove possibilities of multiple interrupts too close to each other
+		  HAL_Delay(50);
+
+		  initialize_song = 0;
+
+		  switch(SONG_SELECTOR) {
+			  case 0:
+				  head = play_London_Bridge(1);
+				  break;
+			  case 1:
+				  head = play_Pokemon_Emerald(1);
+				  break;
+			  default:
+				  head = NULL;
+				  error_routine();
+				  break;
+		  }
+	  }
+
+	  if(head != NULL) {
+		  play_Note(head->period, head->delay);
+		  head = head->next;
+	  }
 
     /* USER CODE END WHILE */
 
@@ -377,16 +402,19 @@ static void MX_GPIO_Init(void)
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 	// interrupt of the microphone to START the song
 	if(GPIO_Pin == GPIO_PIN_8)
-		play = 1;
+		initialize_song = 1;
+}
 
-	// interrupt of the BLUE BUTTON to STOP the song
-	/*
-	if(GPIO_Pin == GPIO_PIN_13) {
-		HAL_TIM_PWM_Stop(&htim1, TIM_CHANNEL_2);
-		stop = 1;
-	}
-	*/
-
+void error_routine() {
+	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_SET);
+	HAL_Delay(500);
+	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET);
+	HAL_Delay(500);
+	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_SET);
+	HAL_Delay(500);
+	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET);
+	HAL_Delay(500);
+	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_SET);
 }
 
 static void set_Note(int period) {
@@ -451,11 +479,14 @@ static void set_Note(int period) {
   HAL_TIM_MspPostInit(&htim1);
 }
 
-static void play_Note(int period, int delay) {
-	set_Note(period);
-	HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
-	HAL_Delay(delay);
-	HAL_TIM_PWM_Stop(&htim1, TIM_CHANNEL_2);
+static struct note* create_and_play(int notes[], int delays[], int size_notes, int size_delays) {
+	// check dimension of arrays and create structure of song
+	if(size_notes != size_delays) {
+		error_routine();
+	} else {
+		return create_Song(notes, delays, size_notes);
+	}
+	return NULL;
 }
 
 static struct note* create_Song(int notes[], int delays[], int size) {
@@ -483,27 +514,17 @@ static struct note* create_Song(int notes[], int delays[], int size) {
 	return head;
 }
 
-static void play_Song(struct note* head) {
-	struct note* temp = head;
-
-	while(temp != NULL) {
-		play_Note(temp->period, temp->delay);
-		temp = temp->next;
-
-		// code used to stop the song when blue push button pressed
-		/*
-		if(stop) {
-			HAL_TIM_PWM_Stop(&htim1, TIM_CHANNEL_2);
-			stop = 0;
-			break;
-		}
-		*/
+static void play_Note(int period, int delay) {
+	if(period != PAUSE) {
+		set_Note(period);
+		HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
 	}
 
+	HAL_Delay(delay);
+	HAL_TIM_PWM_Stop(&htim1, TIM_CHANNEL_2);
 }
 
-
-static void play_London_Bridge(int multi) {
+static struct note* play_London_Bridge(int multi) {
 	// write notes
 	int notes[] = {SOL4, LA4, SOL4, FA4, MI4, FA4, SOL4, RE4, MI4, FA4, MI4, FA4, SOL4, SOL4, LA4, SOL4,
 					FA4, MI4, FA4, SOL4, RE4, SOL4, MI4, DO4};
@@ -535,20 +556,13 @@ static void play_London_Bridge(int multi) {
 					(int) TEMPO * multi * 6/8
 	};
 
-	// check dimension of arrays and create structure of song
-	if((sizeof(notes)/sizeof(int)) != (sizeof(delays)/sizeof(int))) {
-		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_SET);
-	} else {
-		struct note* head = create_Song(notes, delays, (sizeof(notes)/sizeof(int)));
-		play_Song(head);
-	}
-
-	HAL_TIM_PWM_Stop(&htim1, TIM_CHANNEL_2);
+	return create_and_play(notes, delays, (sizeof(notes)/sizeof(int)), (sizeof(delays)/sizeof(int)));
 }
 
-static void play_Pokemon_Emerald(int multi) {
+static struct note* play_Pokemon_Emerald(int multi) {
 	// write notes
-	int notes[] = {(int)FA4*2,
+	int notes[] = {(int) PAUSE,
+					(int)FA4*2,
 					(int)DO4,
 					(int)FA4,
 					(int)DO4,
@@ -625,7 +639,8 @@ static void play_Pokemon_Emerald(int multi) {
 	};
 
 	// write tempos
-	int delays[] = {(int) TEMPO * multi * 2/8,
+	int delays[] = {(int) TEMPO * multi * 6/8,
+			(int) TEMPO * multi * 2/8,
 			(int) TEMPO * multi * 2/8,
 			(int) TEMPO * multi * 2/8,
 			(int) TEMPO * multi * 2/8,
@@ -701,16 +716,7 @@ static void play_Pokemon_Emerald(int multi) {
 			(int) TEMPO * multi * 6/8
 	};
 
-	// check dimension of arrays and create structure of song
-	if((sizeof(notes)/sizeof(int)) != (sizeof(delays)/sizeof(int))) {
-		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_SET);
-	} else {
-		struct note* head = create_Song(notes, delays, (sizeof(notes)/sizeof(int)));
-		HAL_Delay(750);
-		play_Song(head);
-	}
-
-	HAL_TIM_PWM_Stop(&htim1, TIM_CHANNEL_2);
+	return create_and_play(notes, delays, (sizeof(notes)/sizeof(int)), (sizeof(delays)/sizeof(int)));
 }
 
 /* USER CODE END 4 */
