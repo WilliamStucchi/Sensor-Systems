@@ -206,6 +206,7 @@ int main(void)
 				  head = play_Io_Credo_In_Me(2);
 				  break;
 			  default:
+				  head = NULL;
 				  error_routine();
 				  break;
 		  }
