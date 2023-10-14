@@ -90,26 +90,16 @@ int main(void)
   MX_GPIO_Init();
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
-  HAL_UART_Transmit(&huart2, "William Stucchi nato ieri\r\n", sizeof(char) * 27, 1000);
-  HAL_Delay(2000);
 
+  unsigned char string_to_send[] = {"William Stucchi 2000\r\n"};
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	/*
-	 * int count = 0;
-	 * char symbols[4] = {';', ':', '\"', '['};
-	 * char string_to_send[4] = {};
-	 * strcpy(string_to_send, strcat(symbols[count],")\r\n"));
-	 * count > 3 ? count = 0 : count++;
-	 *
-	 */
-	char string_to_send[] = {"_\r\n"};
-	HAL_UART_Transmit(&huart2, string_to_send, sizeof(char) * 3, 1000);
-	HAL_Delay(2000);
+	  HAL_UART_Transmit(&huart2, string_to_send, sizeof(char) * sizeof(string_to_send), 1000);
+	  HAL_Delay(1000);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
