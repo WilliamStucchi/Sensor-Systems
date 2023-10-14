@@ -380,10 +380,12 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 		play = 1;
 
 	// interrupt of the BLUE BUTTON to STOP the song
+	/*
 	if(GPIO_Pin == GPIO_PIN_13) {
 		HAL_TIM_PWM_Stop(&htim1, TIM_CHANNEL_2);
 		stop = 1;
 	}
+	*/
 
 }
 
@@ -488,11 +490,14 @@ static void play_Song(struct note* head) {
 		play_Note(temp->period, temp->delay);
 		temp = temp->next;
 
+		// code used to stop the song when blue push button pressed
+		/*
 		if(stop) {
 			HAL_TIM_PWM_Stop(&htim1, TIM_CHANNEL_2);
 			stop = 0;
 			break;
 		}
+		*/
 	}
 
 }
