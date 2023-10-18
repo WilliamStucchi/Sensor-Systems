@@ -59,9 +59,9 @@ static void MX_USART2_UART_Init(void);
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
 	GPIO_PinState pushbutton;
 	switch(GPIO_Pin) {
-	case GPIO_PIN_13:
-			pushbutton = HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_13);
-			HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, !pushbutton);
+		case GPIO_PIN_13:
+				pushbutton = HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_13);
+				HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, !pushbutton);
 	}
 }
 
