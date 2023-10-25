@@ -237,7 +237,6 @@ static void MX_TIM3_Init(void)
 
   TIM_ClockConfigTypeDef sClockSourceConfig = {0};
   TIM_MasterConfigTypeDef sMasterConfig = {0};
-  TIM_OC_InitTypeDef sConfigOC = {0};
 
   /* USER CODE BEGIN TIM3_Init 1 */
 
@@ -257,21 +256,9 @@ static void MX_TIM3_Init(void)
   {
     Error_Handler();
   }
-  if (HAL_TIM_PWM_Init(&htim3) != HAL_OK)
-  {
-    Error_Handler();
-  }
   sMasterConfig.MasterOutputTrigger = TIM_TRGO_UPDATE;
   sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
   if (HAL_TIMEx_MasterConfigSynchronization(&htim3, &sMasterConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  sConfigOC.OCMode = TIM_OCMODE_PWM1;
-  sConfigOC.Pulse = (10000/5)/2- 1;
-  sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
-  sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
-  if (HAL_TIM_PWM_ConfigChannel(&htim3, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
   {
     Error_Handler();
   }
@@ -366,6 +353,8 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE BEGIN 4 */
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc) {
+	if(hadc != &hadc1) return;
+
 	conversion_value = HAL_ADC_GetValue(&hadc1);
     voltage =  conversion_value * 3.3 / 4096.0;
     length = snprintf(message, 20, "Voltage: %.3f", voltage);
