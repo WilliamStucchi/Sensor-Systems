@@ -126,7 +126,7 @@ int main(void)
 
 		// send message to Putty
 		unsigned char message[100];
-		int length = snprintf(message, 100, "message: %f -- %f -- %f\r\n", pot, vref, temp);
+		int length = snprintf(message, 100, "%f V | %f Vref | %f °C\r\n", pot, vref, temp);
 		HAL_UART_Transmit(&huart2, message, length, 100);
 	}
     /* USER CODE END WHILE */
@@ -223,7 +223,7 @@ static void MX_ADC1_Init(void)
   */
   sConfig.Channel = ADC_CHANNEL_1;
   sConfig.Rank = 1;
-  sConfig.SamplingTime = ADC_SAMPLETIME_84CYCLES;
+  sConfig.SamplingTime = ADC_SAMPLETIME_480CYCLES;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
   {
     Error_Handler();
