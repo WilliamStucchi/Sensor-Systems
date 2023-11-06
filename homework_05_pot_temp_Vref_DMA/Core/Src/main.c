@@ -114,7 +114,7 @@ int main(void)
 	 if(adcConvComplete) {
 		adcConvComplete = 0;
 
-		// print values converted
+		// print values converted (first converto to voltage values)
 
 		// potentiometer
 		float pot = (adcResults[0]) * 3.3 / 4096.0;
