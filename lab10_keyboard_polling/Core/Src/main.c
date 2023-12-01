@@ -40,33 +40,21 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
-TIM_HandleTypeDef htim3;
-TIM_HandleTypeDef htim10;
-
 UART_HandleTypeDef huart2;
-DMA_HandleTypeDef hdma_usart2_tx;
 
 /* USER CODE BEGIN PV */
-volatile int compute_encoder = 0;
-
-volatile char message[64];
-volatile int len = 0;
-
-volatile int16_t old = 0;
-volatile int16_t delta = 0;
-volatile int16_t new = 0;
-volatile float rpm = 0.0;
+typedef struct {
+	char value[2];
+	GPIO_PinState state;
+}keyboard_t;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
-static void MX_DMA_Init(void);
 static void MX_USART2_UART_Init(void);
-static void MX_TIM3_Init(void);
-static void MX_TIM10_Init(void);
 /* USER CODE BEGIN PFP */
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim);
+
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -102,44 +90,108 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_DMA_Init();
   MX_USART2_UART_Init();
-  MX_TIM3_Init();
-  MX_TIM10_Init();
   /* USER CODE BEGIN 2 */
-  HAL_TIM_Encoder_Start(&htim3, TIM_CHANNEL_ALL);
-  HAL_TIM_Base_Start_IT(&htim10);
-  htim3.Instance->CNT = 32500;
+  char message[32];
+  int length = 0;
+  int printed = 0;
+  int pressed = 0;
+  int state_i = 0;
+  int state_j = 0;
+  int column = 0;
+
+  const uint16_t COLUMN_PIN[]= {
+  		GPIO_PIN_8,
+  		GPIO_PIN_9,
+  		GPIO_PIN_10,
+  		GPIO_PIN_11
+  };
+
+  keyboard_t data[4][4];
+  for(int i = 0; i < 4; i++) {
+	  for(int j = 0; j < 4; j++) {
+		  data[i][j].state = GPIO_PIN_SET;
+		  data[i][j].value[1] = '\0';
+	  }
+  }
+
+  data[0][0].value[0] = '0';
+  data[0][1].value[0] = '1';
+  data[0][2].value[0] = '2';
+  data[0][3].value[0] = '3';
+  data[1][0].value[0] = '4';
+  data[1][1].value[0] = '5';
+  data[1][2].value[0] = '6';
+  data[1][3].value[0] = '7';
+  data[2][0].value[0] = '8';
+  data[2][1].value[0] = '9';
+  data[2][2].value[0] = 'A';
+  data[2][3].value[0] = 'B';
+  data[3][0].value[0] = 'C';
+  data[3][1].value[0] = 'D';
+  data[3][2].value[0] = 'E';
+  data[3][3].value[0] = 'F';
+
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_10, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_11, GPIO_PIN_RESET);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	if(compute_encoder) {
-		compute_encoder = 0;
+	HAL_Delay(1);
 
-		new =  __HAL_TIM_GET_COUNTER(&htim3);
-		delta = new - old;
-
-		// manage overflow
-		/*
-		if(delta > 65000) {
-			// if delta > 65000 it means that new reached 65535 and it should start from 0 again
-			delta = new - 65535 + old;
-		} else if(delta < -65000) {
-			// if delta < -65000 it means that new reached -65535 and it should start from 0 again
-			delta = new + 65535 + old;
-     	}*/
-
-		rpm = delta / 24.0;
-		rpm *= 60;
-
-		len = snprintf(message, 64, "RPM: %.3f | %d | %d \r\n", rpm, old, new);
-		HAL_UART_Transmit_DMA(&huart2, message, len);
-		old = new;
+	HAL_GPIO_WritePin(GPIOC, COLUMN_PIN[column], GPIO_PIN_SET);
+	HAL_Delay(1);
+	data[state_i][state_j].state = HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_12);
+	state_i++;
+	data[state_i][state_j].state = HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_13);
+	state_i++;
+	data[state_i][state_j].state = HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_2);
+	state_i++;
+	data[state_i][state_j].state = HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_3);
+	state_i = 0;
+	HAL_GPIO_WritePin(GPIOC, COLUMN_PIN[column], GPIO_PIN_RESET);
+	column++;
+	if(column > 3) {
+		column = 0;
 	}
 
+	state_j++;
+	if(state_j > 3) {
+		state_j = 0;
+	}
+
+	int count_pressed = 0;
+	for(int i = 0; i < 4; i++) {
+		for(int j = 0; j < 4; j++) {
+			if(data[i][j].state == GPIO_PIN_RESET) {
+				count_pressed++;
+			}
+		}
+	}
+	if(count_pressed == 0) {
+		pressed = 0;
+	}
+
+	for(int i = 0; i < 4; i++) {
+		for(int j = 0; j < 4; j++) {
+			if(data[i][j].state == GPIO_PIN_RESET) {
+				length = snprintf(message, 32, "%s ", data[i][j].value);
+				pressed = 1;
+			}
+		}
+	}
+
+	if(pressed && !printed){
+		HAL_UART_Transmit(&huart2, message, length, 50);
+		printed = 1;
+	} else if(!pressed){
+		printed = 0;
+	}
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -194,86 +246,6 @@ void SystemClock_Config(void)
 }
 
 /**
-  * @brief TIM3 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_TIM3_Init(void)
-{
-
-  /* USER CODE BEGIN TIM3_Init 0 */
-
-  /* USER CODE END TIM3_Init 0 */
-
-  TIM_Encoder_InitTypeDef sConfig = {0};
-  TIM_MasterConfigTypeDef sMasterConfig = {0};
-
-  /* USER CODE BEGIN TIM3_Init 1 */
-
-  /* USER CODE END TIM3_Init 1 */
-  htim3.Instance = TIM3;
-  htim3.Init.Prescaler = 0;
-  htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim3.Init.Period = 65535;
-  htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV4;
-  htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
-  sConfig.EncoderMode = TIM_ENCODERMODE_TI1;
-  sConfig.IC1Polarity = TIM_ICPOLARITY_FALLING;
-  sConfig.IC1Selection = TIM_ICSELECTION_DIRECTTI;
-  sConfig.IC1Prescaler = TIM_ICPSC_DIV1;
-  sConfig.IC1Filter = 15;
-  sConfig.IC2Polarity = TIM_ICPOLARITY_RISING;
-  sConfig.IC2Selection = TIM_ICSELECTION_DIRECTTI;
-  sConfig.IC2Prescaler = TIM_ICPSC_DIV1;
-  sConfig.IC2Filter = 15;
-  if (HAL_TIM_Encoder_Init(&htim3, &sConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
-  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
-  if (HAL_TIMEx_MasterConfigSynchronization(&htim3, &sMasterConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN TIM3_Init 2 */
-
-  /* USER CODE END TIM3_Init 2 */
-
-}
-
-/**
-  * @brief TIM10 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_TIM10_Init(void)
-{
-
-  /* USER CODE BEGIN TIM10_Init 0 */
-
-  /* USER CODE END TIM10_Init 0 */
-
-  /* USER CODE BEGIN TIM10_Init 1 */
-
-  /* USER CODE END TIM10_Init 1 */
-  htim10.Instance = TIM10;
-  htim10.Init.Prescaler = 8400-1;
-  htim10.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim10.Init.Period = 10000-1;
-  htim10.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-  htim10.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
-  if (HAL_TIM_Base_Init(&htim10) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN TIM10_Init 2 */
-
-  /* USER CODE END TIM10_Init 2 */
-
-}
-
-/**
   * @brief USART2 Initialization Function
   * @param None
   * @retval None
@@ -307,22 +279,6 @@ static void MX_USART2_UART_Init(void)
 }
 
 /**
-  * Enable DMA controller clock
-  */
-static void MX_DMA_Init(void)
-{
-
-  /* DMA controller clock enable */
-  __HAL_RCC_DMA1_CLK_ENABLE();
-
-  /* DMA interrupt init */
-  /* DMA1_Stream6_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA1_Stream6_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(DMA1_Stream6_IRQn);
-
-}
-
-/**
   * @brief GPIO Initialization Function
   * @param None
   * @retval None
@@ -342,11 +298,14 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pin : B1_Pin */
-  GPIO_InitStruct.Pin = B1_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8|GPIO_PIN_9|GPIO_PIN_10|GPIO_PIN_11, GPIO_PIN_RESET);
+
+  /*Configure GPIO pins : PC13 PC2 PC3 PC12 */
+  GPIO_InitStruct.Pin = GPIO_PIN_13|GPIO_PIN_2|GPIO_PIN_3|GPIO_PIN_12;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(B1_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /*Configure GPIO pin : LD2_Pin */
   GPIO_InitStruct.Pin = LD2_Pin;
@@ -355,16 +314,19 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(LD2_GPIO_Port, &GPIO_InitStruct);
 
+  /*Configure GPIO pins : PC8 PC9 PC10 PC11 */
+  GPIO_InitStruct.Pin = GPIO_PIN_8|GPIO_PIN_9|GPIO_PIN_10|GPIO_PIN_11;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
 /* USER CODE BEGIN MX_GPIO_Init_2 */
 /* USER CODE END MX_GPIO_Init_2 */
 }
 
 /* USER CODE BEGIN 4 */
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
-	if(htim != &htim10) return;
 
-	compute_encoder = 1;
-}
 /* USER CODE END 4 */
 
 /**
