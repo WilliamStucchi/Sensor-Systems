@@ -45,6 +45,10 @@ TIM_HandleTypeDef htim1;
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
+// enable read of rows of the keyboard
+volatile int activate;
+
+// struct to keep track of the buttons
 typedef struct {
 	char value[2];
 	GPIO_PinState state;
@@ -52,12 +56,7 @@ typedef struct {
 	int printed;
 }keyboard_t;
 
-volatile int activate;
-
-volatile char message[32];
-volatile int length = 0;
-volatile int printed = 0;
-volatile int pressed = 0;
+// service variables
 volatile int state_i = 0;
 volatile int state_j = 0;
 volatile int column = 0;
@@ -68,6 +67,10 @@ volatile const uint16_t COLUMN_PIN[]= {
 	GPIO_PIN_10,
 	GPIO_PIN_11
 };
+
+// send to remote terminal
+volatile char message[32];
+volatile int length = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -116,38 +119,38 @@ int main(void)
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
   keyboard_t data[4][4];
-    for(int i = 0; i < 4; i++) {
-  	  for(int j = 0; j < 4; j++) {
-  		  data[i][j].state = GPIO_PIN_SET;
-  		  data[i][j].value[1] = '\0';
-  		  data[i][j].pressed = 0;
-  		  data[i][j].printed = 0;
-  	  }
+  for(int i = 0; i < 4; i++) {
+    for(int j = 0; j < 4; j++) {
+	    data[i][j].state = GPIO_PIN_SET;
+	    data[i][j].value[1] = '\0';
+	    data[i][j].pressed = 0;
+	    data[i][j].printed = 0;
     }
+  }
 
-    data[0][0].value[0] = '0';
-    data[0][1].value[0] = '1';
-    data[0][2].value[0] = '2';
-    data[0][3].value[0] = '3';
-    data[1][0].value[0] = '4';
-    data[1][1].value[0] = '5';
-    data[1][2].value[0] = '6';
-    data[1][3].value[0] = '7';
-    data[2][0].value[0] = '8';
-    data[2][1].value[0] = '9';
-    data[2][2].value[0] = 'A';
-    data[2][3].value[0] = 'B';
-    data[3][0].value[0] = 'C';
-    data[3][1].value[0] = 'D';
-    data[3][2].value[0] = 'E';
-    data[3][3].value[0] = 'F';
+  data[0][0].value[0] = '0';
+  data[0][1].value[0] = '1';
+  data[0][2].value[0] = '2';
+  data[0][3].value[0] = '3';
+  data[1][0].value[0] = '4';
+  data[1][1].value[0] = '5';
+  data[1][2].value[0] = '6';
+  data[1][3].value[0] = '7';
+  data[2][0].value[0] = '8';
+  data[2][1].value[0] = '9';
+  data[2][2].value[0] = 'A';
+  data[2][3].value[0] = 'B';
+  data[3][0].value[0] = 'C';
+  data[3][1].value[0] = 'D';
+  data[3][2].value[0] = 'E';
+  data[3][3].value[0] = 'F';
 
-    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8, GPIO_PIN_RESET);
-    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9, GPIO_PIN_RESET);
-    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_10, GPIO_PIN_RESET);
-    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_11, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_10, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_11, GPIO_PIN_RESET);
 
-    HAL_TIM_Base_Start_IT(&htim1);
+  HAL_TIM_Base_Start_IT(&htim1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -167,6 +170,7 @@ int main(void)
 			data[state_i][state_j].state = HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_3);
 			state_i = 0;
 			HAL_GPIO_WritePin(GPIOC, COLUMN_PIN[column], GPIO_PIN_RESET);
+
 			column++;
 			if(column > 3) {
 				column = 0;
